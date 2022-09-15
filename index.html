@@ -1,96 +1,63 @@
-<!DOCTYPE html>
-<html>
-<style>
-body, html {
-  height: 100%;
-  margin: 0;
-}
+<head>
+  <style> 
+  body { margin: 0; } 
+  </style>
 
-.bgimg {
-  background-image: url('https://images.unsplash.com/photo-1604964432806-254d07c11f32?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8NHx8ZGV2ZWxvcGVyfGVufDB8fDB8fA%3D%3D&w=1000&q=80');
-  height: 100%;
-  background-position: center;
-  background-size: cover;
-  position: relative;
-  color: white;
-  font-family: "Courier New", Courier, monospace;
-  font-size: 25px;
-}
+  <script src="https://unpkg.com/three"></script>
 
-.topleft {
-  position: absolute;
-  top: 0;
-  left: 16px;
-}
+  <script src="https://unpkg.com/globe.gl"></script>
+<!--    <script src="../../dist/globe.gl.js"></script>-->
+</head>
 
-.bottomleft {
-  position: absolute;
-  bottom: 0;
-  left: 16px;
-}
-
-.middle {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-}
-
-#demo {
-  font-size:30px;
-}
-hr {
-  margin: auto;
-  width: 40%;
-}
-</style>
 <body>
-
-<div class="bgimg">
-  <div class="topleft">
-    <p></p>
-  </div>
-  <div class="middle">
-    <h1>COMING SOON</h1>
-    <hr>
-    <p id="demo"></p>
-  </div>
-  <div class="bottomleft">
-    <p>by Hussein Abbas</p>
-  </div>
-</div>
-
-<script>
-// Set the date we're counting down to
-var countDownDate = new Date("Jun 15, 2022 00:00:00").getTime();
-
-// Update the count down every 1 second
-var countdownfunction = setInterval(function() {
-
-  // Get todays date and time
-  var now = new Date().getTime();
+  <div id="globeViz"></div> <!--Background still interactive, but in the background-->
   
-  // Find the distance between now an the count down date
-  var distance = countDownDate - now;
-  
-  // Time calculations for days, hours, minutes and seconds
-  var days = Math.floor(distance / (1000 * 60 * 60 * 24));
-  var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-  var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
-  var seconds = Math.floor((distance % (1000 * 60)) / 1000);
-  
-  // Output the result in an element with id="demo"
-  document.getElementById("demo").innerHTML = days + "d " + hours + "h "
-  + minutes + "m " + seconds + "s ";
-  
-  // If the count down is over, write some text 
-  if (distance < 0) {
-    clearInterval(countdownfunction);
-    document.getElementById("demo").innerHTML = "EXPIRED";
-  }
-}, 1000);
-</script>
+  <script>
+    const world = Globe({ animateIn: true })
+      .globeImageUrl('https://unpkg.com/three-globe/example/img/earth-blue-marble.jpg')
+      .bumpImageUrl('https://unpkg.com/three-globe/example/img/earth-topology.png')
+      .backgroundImageUrl('https://unpkg.com/three-globe/example/img/night-sky.png')
+      (document.getElementById('globeViz'));
 
+    // Auto-rotate
+    world.controls().autoRotate = true;
+    world.controls().autoRotateSpeed = 0.25;
+    // custom globe material
+    const globeMaterial = world.globeMaterial();
+    globeMaterial.bumpScale = 10;
+    new THREE.TextureLoader().load('https://unpkg.com/three-globe/example/img/earth-water.png', texture => {
+      globeMaterial.specularMap = texture;
+      globeMaterial.specular = new THREE.Color('grey');
+      globeMaterial.shininess = 20;
+    });
+
+    // Add clouds sphere
+    const CLOUDS_IMG_URL = './clouds.png'; 
+    const CLOUDS_ALT = 0.004;
+    const CLOUDS_ROTATION_SPEED = -0.005; // deg/frame
+
+    new THREE.TextureLoader().load(CLOUDS_IMG_URL, cloudsTexture => {
+      const clouds = new THREE.Mesh(
+        new THREE.SphereBufferGeometry(world.getGlobeRadius() * (1 + CLOUDS_ALT), 75, 75),
+        new THREE.MeshPhongMaterial({ map: cloudsTexture, transparent: true })
+      );
+      world.scene().add(clouds);
+
+      (function rotateClouds() {
+        clouds.rotation.y += CLOUDS_ROTATION_SPEED * Math.PI / 180;
+        requestAnimationFrame(rotateClouds);
+      })();
+    });
+
+
+    setTimeout(() => { // wait for scene to be populated (asynchronously)
+      const directionalLight = world.scene().children.find(obj3d => obj3d.type === 'DirectionalLight');
+      directionalLight && directionalLight.position.set(15, 10, 20); // change light position to see the specularMap's effect
+    });
+
+    var switch_backgroud = function (){
+      document.getElementById("Background_button").setAttribute("onClick", "")
+    }
+  </script>
+  
 </body>
-</html>
